@@ -101,6 +101,8 @@ for row in data['rows']:
             'area': area,
             'area_id': area_id,
             'group': party_membership.get('name'),
+            'birth_date': value.get('dob'),
+            'source': value['source']['url'],
             'start_date': start_date_for_json,
             'end_date': end_date_for_json,
             'term': term,
