@@ -90,6 +90,8 @@ for row in data['rows']:
         continue
     area, area_id = decompose_constituency(value)
     start_date = max(start_date, terms['11']['start_date'])
+    start_date_for_json = str(start_date) if start_date else None
+    end_date_for_json = str(end_date) if end_date else None
     person_data = (
         {
             'id': value['source']['id'],
@@ -99,8 +101,8 @@ for row in data['rows']:
             'area': area,
             'area_id': area_id,
             'group': party_membership.get('name'),
-            'start_date': start_date,
-            'end_date': end_date,
+            'start_date': start_date_for_json,
+            'end_date': end_date_for_json,
             'term': term,
             'given_name': value['first_name'],
             'family_name': value['last_name'],
