@@ -72,6 +72,14 @@ def decompose_constituency(value):
     else:
         return value['constituency'], None
 
+def get_phone(value):
+    first_phone_value = value['phone'][0]
+    if not first_phone_value:
+        return None
+    # Only allow numbers, spaces or brackets in the phone number:
+    return re.search(r'^([0-9\(\) ]+)', first_phone_value).group(1)
+
+
 for row in data['rows']:
     value = row['value']
     full_name = u'{0} {1}'.format(value['first_name'], value['last_name'])
@@ -109,6 +117,7 @@ for row in data['rows']:
             'given_name': value['first_name'],
             'family_name': value['last_name'],
             'email': get_email(value),
+            'phone': get_phone(value),
         }
     )
     scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
