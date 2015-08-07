@@ -84,6 +84,8 @@ for row in data['rows']:
             'start_date': start_date,
             'end_date': end_date,
             'term': term,
+            'given_name': value['first_name'],
+            'family_name': value['last_name'],
         }
     )
     scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
