@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from datetime import date, datetime
 import json
@@ -41,7 +42,6 @@ class NoGroupFound(Exception):
 def get_membership_one_expected(value, membership_type):
     results = get_memberships(value, membership_type)
     if not results:
-        print "Warning: no group found"
         raise NoGroupFound()
     elif len(results) > 1:
         raise Exception, "Found {count} {mtype} groups in {value}".format(
@@ -79,45 +79,88 @@ def get_phone(value):
     # Only allow numbers, spaces or brackets in the phone number:
     return re.search(r'^([0-9\(\) ]+)', first_phone_value).group(1)
 
+def clip_dates(start_date, end_date, overall_start_date, overall_end_date):
+    assert start_date is not None
+    assert overall_start_date is not None
+    new_start_date = max(start_date, overall_start_date)
+    if end_date and overall_end_date:
+        new_end_date = min(end_date, overall_end_date)
+    elif end_date:
+        new_end_date = end_date
+    elif overall_end_date:
+        new_end_date = overall_end_date
+    else:
+        new_end_date = None
+    return new_start_date, new_end_date
+
+FRACTION_POSITIONS = [
+    u'Frakcijos narys',
+    u'Frakcijos narė',
+    u'Frakcijos seniūno pavaduotojas',
+    u'Frakcijos seniūnė',
+    u'Frakcijos seniūnas',
+]
+
+def get_start_and_end_date(membership_date_list):
+    return [
+        None if s is None else datetime.strptime(s, '%Y-%m-%d').date()
+        for s in membership_date_list
+    ]
 
 for row in data['rows']:
     value = row['value']
     full_name = u'{0} {1}'.format(value['first_name'], value['last_name'])
     parl_membership = get_membership_one_expected(value, 'parliament')
+    parl_start_date, parl_end_date = get_start_and_end_date(
+        parl_membership['membership']
+    )
+    term = get_term(parl_start_date, parl_end_date)
+    if not term:
+        continue
     # Some people seem to be missing a party field:
     try:
         party_membership = get_membership_one_expected(value, 'party')
     except NoGroupFound:
         party_membership = {}
-    start_date, end_date = [
-        None if s is None else datetime.strptime(s, '%Y-%m-%d').date()
-        for s in parl_membership['membership']
+    fraction_memberships = [
+        g for g in get_memberships(value, 'fraction')
+        if g['position'] in FRACTION_POSITIONS
     ]
-    term = get_term(start_date, end_date)
-    if not term:
-        continue
-    area, area_id = decompose_constituency(value)
-    start_date = max(start_date, terms['11']['start_date'])
-    start_date_for_json = str(start_date) if start_date else None
-    end_date_for_json = str(end_date) if end_date else None
-    person_data = (
-        {
-            'id': value['source']['id'],
-            'name': full_name,
-            'website': value.get('home_page'),
-            'image': value['photo'],
-            'area': area,
-            'area_id': area_id,
-            'group': party_membership.get('name'),
-            'birth_date': value.get('dob'),
-            'source': value['source']['url'],
-            'start_date': start_date_for_json,
-            'end_date': end_date_for_json,
-            'term': term,
-            'given_name': value['first_name'],
-            'family_name': value['last_name'],
-            'email': get_email(value),
-            'phone': get_phone(value),
-        }
-    )
-    scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
+    if not fraction_memberships:
+        raise Exception(u'Found no fraction membership for {0}'.format(
+            full_name)
+        )
+    for fraction_membership in fraction_memberships:
+        fact_start_date, fact_end_date = get_start_and_end_date(
+            fraction_membership['membership']
+        )
+        area, area_id = decompose_constituency(value)
+        parl_start_date = max(parl_start_date, terms['11']['start_date'])
+        clipped_start_date, clipped_end_date = clip_dates(
+            fact_start_date, fact_end_date, parl_start_date, parl_end_date,
+        )
+        start_date_for_json = str(clipped_start_date) if clipped_start_date else None
+        end_date_for_json = str(clipped_end_date) if clipped_end_date else None
+        person_data = (
+            {
+                'id': value['source']['id'],
+                'name': full_name,
+                'website': value.get('home_page'),
+                'image': value['photo'],
+                'area': area,
+                'area_id': area_id,
+                'party': party_membership.get('name'),
+                'faction': fraction_membership['name'],
+                'birth_date': value.get('dob'),
+                'source': value['source']['url'],
+                'start_date': start_date_for_json,
+                'end_date': end_date_for_json,
+                'term': term,
+                'given_name': value['first_name'],
+                'family_name': value['last_name'],
+                'email': get_email(value),
+                'phone': get_phone(value),
+            }
+        )
+        print json.dumps(person_data, indent=4, sort_keys=True)
+        scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
