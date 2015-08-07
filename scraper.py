@@ -109,7 +109,9 @@ def get_start_and_end_date(membership_date_list):
 
 for row in data['rows']:
     value = row['value']
-    full_name = u'{0} {1}'.format(value['first_name'], value['last_name'])
+    name_parts = [value['first_name'], value['last_name']]
+    full_name = u'{0} {1}'.format(*name_parts)
+    sort_name = u'{1}, {0}'.format(*name_parts)
     parl_membership = get_membership_one_expected(value, 'parliament')
     parl_start_date, parl_end_date = get_start_and_end_date(
         parl_membership['membership']
@@ -160,6 +162,7 @@ for row in data['rows']:
                 'family_name': value['last_name'],
                 'email': get_email(value),
                 'phone': get_phone(value),
+                'sort_name': sort_name,
             }
         )
         print json.dumps(person_data, indent=4, sort_keys=True)
