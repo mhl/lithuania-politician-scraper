@@ -165,7 +165,6 @@ for row in data['rows']:
                 'sort_name': sort_name,
             }
         )
-        print json.dumps(person_data, indent=4, sort_keys=True)
         scraperwiki.sqlite.save(
             unique_keys=['id', 'term', 'start_date'],
             data=person_data
