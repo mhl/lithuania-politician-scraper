@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 import json
+import re
 import requests
 
 import scraperwiki
@@ -57,10 +58,16 @@ def get_term(start_date, end_date):
     if end_date >= terms['11']['start_date']:
         return '11'
 
+def get_email(value):
+    email_list = value['email']
+    if not email_list:
+        return None
+    email_with_trailing_data = email_list[0]
+    return re.sub('\s.*', '', email_with_trailing_data)
+
 for row in data['rows']:
     value = row['value']
     full_name = u'{0} {1}'.format(value['first_name'], value['last_name'])
-
     parl_membership = get_membership_one_expected(value, 'parliament')
     # Some people seem to be missing a party field:
     try:
@@ -86,6 +93,7 @@ for row in data['rows']:
             'term': term,
             'given_name': value['first_name'],
             'family_name': value['last_name'],
+            'email': get_email(value),
         }
     )
     scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
