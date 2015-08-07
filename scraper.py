@@ -6,6 +6,11 @@ import requests
 
 import scraperwiki
 
+# This scraper gets its data from the CouchDB API for manoSeimas.lt
+# as suggested in this GitHub ticket:
+#
+#   https://github.com/everypolitician/everypolitician-data/issues/442
+
 r = requests.get('http://couchdb.manoseimas.lt/mps/_design/mps-by-start-date/_view/MPs%20by%20start%20date')
 
 data = r.json()
