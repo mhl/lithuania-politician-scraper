@@ -65,6 +65,13 @@ def get_email(value):
     email_with_trailing_data = email_list[0]
     return re.sub('\s.*', '', email_with_trailing_data)
 
+def decompose_constituency(value):
+    m = re.search(r'^(.*?)\s+\(Nr\.\s*(\d+)\)\s*(.*)$', value['constituency'])
+    if m:
+        return m.group(1), int(m.group(2))
+    else:
+        return value['constituency'], None
+
 for row in data['rows']:
     value = row['value']
     full_name = u'{0} {1}'.format(value['first_name'], value['last_name'])
@@ -81,12 +88,14 @@ for row in data['rows']:
     term = get_term(start_date, end_date)
     if not term:
         continue
+    area, area_id = decompose_constituency(value)
     start_date = max(start_date, terms['11']['start_date'])
     person_data = (
         {
             'id': value['source']['id'],
             'name': full_name,
-            'area': value['constituency'],
+            'area': area,
+            'area_id': area_id,
             'group': party_membership.get('name'),
             'start_date': start_date,
             'end_date': end_date,
