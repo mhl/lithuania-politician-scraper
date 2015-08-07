@@ -78,6 +78,7 @@ for row in data['rows']:
             'group': party_membership.get('name'),
             'start_date': start_date,
             'end_date': end_date,
+            'term': term,
         }
     )
     scraperwiki.sqlite.save(unique_keys=['id'], data=person_data)
