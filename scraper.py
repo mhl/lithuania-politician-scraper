@@ -96,7 +96,7 @@ for row in data['rows']:
         {
             'id': value['source']['id'],
             'name': full_name,
-            'website': value['home_page'],
+            'website': value.get('home_page'),
             'image': value['photo'],
             'area': area,
             'area_id': area_id,
