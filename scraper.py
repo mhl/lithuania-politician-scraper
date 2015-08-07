@@ -94,6 +94,8 @@ for row in data['rows']:
         {
             'id': value['source']['id'],
             'name': full_name,
+            'website': value['home_page'],
+            'image': value['photo'],
             'area': area,
             'area_id': area_id,
             'group': party_membership.get('name'),
